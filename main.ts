@@ -1,10 +1,20 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { copyFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
-const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-const source = fileURLToPath(new URL("./entry.png", import.meta.url));
-const destination = path.join(outputDir, "entry.png");
+const input = join(process.cwd(), 'entry.png');
+const outDir = process.env.MAKEFUN_OUTPUT_DIR || 'out';
+const output = join(outDir, 'entry.png');
 
-fs.mkdirSync(outputDir, { recursive: true });
-fs.copyFileSync(source, destination);
+if (!existsSync(input)) {
+  throw new Error('entry.png not found');
+}
+const inSize = statSync(input).size;
+if (inSize <= 0) {
+  throw new Error('entry.png is empty');
+}
+mkdirSync(outDir, { recursive: true });
+copyFileSync(input, output);
+const outSize = statSync(output).size;
+if (outSize !== inSize) {
+  throw new Error(`output size mismatch: ${outSize} != ${inSize}`);
+}
